@@ -102,7 +102,7 @@ const config = {
         // Buscamos específicamente PDF417 (formato chileno)
 html5QrCode.start(
         { facingMode: "environment" }, 
-        html5qrConfig,
+        config,
         (decodedText) => {
             console.log("Datos capturados:", decodedText); // Ver en consola qué lee
             procesarDatosChile(decodedText);
