@@ -98,7 +98,6 @@ const config = {
         qrbox: { width: 350, height: 150 }, // Caja rectangular como el carnet
         aspectRatio: 1.777778 
     };
-
         // Buscamos específicamente PDF417 (formato chileno)
 html5QrCode.start(
         { facingMode: "environment" }, 
@@ -106,12 +105,11 @@ html5QrCode.start(
         (decodedText) => {
             console.log("Datos capturados:", decodedText); // Ver en consola qué lee
             procesarDatosChile(decodedText);
-            html5QrCode.stop(); // Detener cámara tras éxito
+            html5QrCode.stop();
             readerDiv.style.display = 'none';
         },
         (errorMessage) => { /* Escaneando... */ }
-    ).catch(err => alert("Error de cámara: " + err));
-}
+    ).catch(err => alert("Error de cámara: " + err));}
 
     // --- LÓGICA DE LA PISTOLA ---
     function manejarEscaneoPistola(event) {
