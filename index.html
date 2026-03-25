@@ -40,7 +40,9 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">RUN (Cédula)</label>
-                        <input type="text" id="run" class="form-control" placeholder="12.345.678-9" required>
+                       <input type="text" id="run" class="form-control" 
+       placeholder="12345678-9" 
+       oninput="this.value = formatearRUT(this.value)" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nombre Completo</label>
@@ -81,6 +83,19 @@
 </div>
 
 <script>
+    function formatearRUT(rut) {
+    // 1. Limpiamos: quitamos puntos, guiones y espacios
+    let valor = rut.replace(/\./g, '').replace(/-/g, '').trim();
+    
+    if (valor.length < 2) return valor;
+
+    // 2. Separamos el cuerpo del dígito verificador (el último carácter)
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1).toUpperCase(); // Aseguramos que la 'K' sea mayúscula
+
+    // 3. Retornamos el cuerpo unido al DV por un guion
+    return cuerpo + "-" + dv;
+}
     let html5QrCode;
 
     // --- LÓGICA DE LA CÁMARA ---
@@ -134,7 +149,7 @@ function procesarDatosChile(data) {
         if (partes.length >= 4) {
             let run = partes[0].replace(/^0+/, '');
             if (!run.includes('-')) run = run.slice(0, -1) + "-" + run.slice(-1);
-            document.getElementById('run').value = run;
+            document.getElementById('run').value = formatearRUT(runEncontrado);
             document.getElementById('nombreCompleto').value = `${partes[3]} ${partes[1]} ${partes[2]}`;
             alert("✅ Datos cargados desde PDF417");
             return;
