@@ -84,33 +84,37 @@
     let html5QrCode;
 
     // --- LÓGICA DE LA CÁMARA ---
-    function encenderCamara() {
-        const readerDiv = document.getElementById('reader');
-        readerDiv.style.display = 'block';
+ function encenderCamara() {
+    const readerDiv = document.getElementById('reader');
+    readerDiv.style.display = 'block';
 
-// 1. Especificamos explícitamente el formato PDF417
-    html5QrCode = new Html5Qrcode("reader", { 
-        formatsToSupport: [ Html5QrcodeSupportedFormats.PDF_417 ] 
-    });
+    // Eliminamos la restricción de formato para que lea QR y PDF417
+    html5QrCode = new Html5Qrcode("reader");
 
-const config = { 
-        fps: 20, // Más cuadros por segundo para capturar mejor
-        qrbox: { width: 200, height: 200 }, // Caja rectangular como el carnet
-        aspectRatio: 1.777778 
+    const config = { 
+        fps: 20, 
+        qrbox: { width: 300, height: 200 }, // Caja más versátil
+        videoConstraints: {
+            facingMode: "environment",
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+        }
     };
-        // Buscamos específicamente PDF417 (formato chileno)
-html5QrCode.start(
+
+    html5QrCode.start(
         { facingMode: "environment" }, 
         config,
         (decodedText) => {
-            console.log("Datos capturados:", decodedText); // Ver en consola qué lee
             procesarDatosChile(decodedText);
-            html5QrCode.stop();
-            readerDiv.style.display = 'none';
+            // No detenemos la cámara de inmediato para que el usuario vea el éxito
+            setTimeout(() => {
+                html5QrCode.stop();
+                readerDiv.style.display = 'none';
+            }, 1000);
         },
-        (errorMessage) => { /* Escaneando... */ }
-    ).catch(err => alert("Error de cámara: " + err));}
-
+        (errorMessage) => { /* Buscando... */ }
+    ).catch(err => alert("Error: " + err));
+}
     // --- LÓGICA DE LA PISTOLA ---
     function manejarEscaneoPistola(event) {
         if (event.key === 'Enter') {
@@ -121,42 +125,49 @@ html5QrCode.start(
     }
 
     // --- PROCESAMIENTO COMÚN (Chile) ---
-    function procesarDatosChile(cadena) {
-// 1. Ver qué leyó la cámara exactamente
-    alert("¡Lectura detectada!\nContenido: " + cadena.substring(0, 50) + "..."); 
+function procesarDatosChile(data) {
+    console.log("Datos capturados:", data);
 
-    try {
-        const partes = cadena.split('|');
-        
-        // El carnet chileno suele tener entre 15 y 20 campos separados por "|"
+    // CASO 1: Es un PDF417 (Cadena larga con pipes '|')
+    if (data.includes('|')) {
+        const partes = data.split('|');
         if (partes.length >= 4) {
-            let runLimpio = partes[0].replace(/^0+/, ''); // Quitar ceros
+            let run = partes[0].replace(/^0+/, '');
+            if (!run.includes('-')) run = run.slice(0, -1) + "-" + run.slice(-1);
             
-            // Formatear RUN con guion
-            if (!runLimpio.includes('-')) {
-                runLimpio = runLimpio.slice(0, -1) + "-" + runLimpio.slice(-1);
-            }
-            
-            // Asignar a los inputs (Asegúrate que los IDs coincidan: 'run' y 'nombreCompleto')
-            const inputRun = document.getElementById('run');
-            const inputNombre = document.getElementById('nombreCompleto');
-
-            if(inputRun && inputNombre) {
-                inputRun.value = runLimpio;
-                inputNombre.value = `${partes[3]} ${partes[1]} ${partes[2]}`;
-                alert("✅ Datos cargados al formulario");
-            } else {
-                alert("❌ Error: No se encontraron los campos 'run' o 'nombreCompleto' en el HTML");
-            }
-            
-        } else {
-            alert("❌ El código leído no tiene el formato de una cédula (pocos separadores '|').");
+            document.getElementById('run').value = run;
+            document.getElementById('nombreCompleto').value = `${partes[3]} ${partes[1]} ${partes[2]}`;
+            alert("✅ Datos cargados desde PDF417");
         }
-    } catch (err) {
-        alert("❌ Error procesando los datos: " + err.message);
+    } 
+    // CASO 2: Es un QR (Suele ser una URL del Registro Civil)
+    else if (data.includes('http')) {
+        try {
+            const url = new URL(data);
+            // Las URLs del Registro Civil suelen traer el RUN en los parámetros
+            // Ejemplo: .../consulta?run=12345678&dv=9
+            const params = new URLSearchParams(url.search);
+            const run = params.get('run');
+            const dv = params.get('dv');
+
+            if (run && dv) {
+                document.getElementById('run').value = `${run}-${dv}`;
+                // NOTA: El QR de validación a veces NO trae el nombre por privacidad.
+                // En ese caso, el usuario deberá completar el nombre manualmente.
+                document.getElementById('nombreCompleto').focus();
+                alert("✅ RUN cargado desde QR. Por favor, complete el nombre.");
+            } else {
+                alert("QR leído, pero no contiene datos de RUN directos.");
+            }
+        } catch (e) {
+            alert("QR detectado pero el formato es desconocido.");
+        }
+    }
+    // CASO 3: Otros formatos
+    else {
+        alert("Código detectado: " + data + ". Formato no reconocido.");
     }
 }
-
     function toggleVehiculo() {
         const tipo = document.getElementById('tipoEntrada').value;
         document.getElementById('campoPatente').style.display = (tipo === 'vehicular') ? 'block' : 'none';
