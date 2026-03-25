@@ -126,46 +126,47 @@
 
     // --- PROCESAMIENTO COMÚN (Chile) ---
 function procesarDatosChile(data) {
-    console.log("Datos capturados:", data);
+    console.log("Contenido crudo capturado:", data);
 
-    // CASO 1: Es un PDF417 (Cadena larga con pipes '|')
+    // 1. Intentar el formato tradicional de barras (PDF417 - Reverso)
     if (data.includes('|')) {
         const partes = data.split('|');
         if (partes.length >= 4) {
             let run = partes[0].replace(/^0+/, '');
             if (!run.includes('-')) run = run.slice(0, -1) + "-" + run.slice(-1);
-            
             document.getElementById('run').value = run;
             document.getElementById('nombreCompleto').value = `${partes[3]} ${partes[1]} ${partes[2]}`;
             alert("✅ Datos cargados desde PDF417");
-        }
-    } 
-    // CASO 2: Es un QR (Suele ser una URL del Registro Civil)
-    else if (data.includes('http')) {
-        try {
-            const url = new URL(data);
-            // Las URLs del Registro Civil suelen traer el RUN en los parámetros
-            // Ejemplo: .../consulta?run=12345678&dv=9
-            const params = new URLSearchParams(url.search);
-            const run = params.get('run');
-            const dv = params.get('dv');
-
-            if (run && dv) {
-                document.getElementById('run').value = `${run}-${dv}`;
-                // NOTA: El QR de validación a veces NO trae el nombre por privacidad.
-                // En ese caso, el usuario deberá completar el nombre manualmente.
-                document.getElementById('nombreCompleto').focus();
-                alert("✅ RUN cargado desde QR. Por favor, complete el nombre.");
-            } else {
-                alert("QR leído, pero no contiene datos de RUN directos.");
-            }
-        } catch (e) {
-            alert("QR detectado pero el formato es desconocido.");
+            return;
         }
     }
+
+    // 2. BUSCADOR DETECTIVE (Para el QR del frente)
+    // Buscamos cualquier patrón tipo 12345678-9 o 123456789 dentro del texto
+    const regexRun = /(\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]{1})|(\d{7,8}[\dkK]{1})/;
+    const match = data.match(regexRun);
+
+    if (match) {
+        let runEncontrado = match[0].replace(/\./g, ''); // Quitamos puntos si los tiene
+        
+        // Aseguramos que tenga guion antes del dígito verificador
+        if (!runEncontrado.includes('-')) {
+            const cuerpo = runEncontrado.slice(0, -1);
+            const dv = runEncontrado.slice(-1);
+            runEncontrado = `${cuerpo}-${dv}`;
+        }
+
+        document.getElementById('run').value = runEncontrado;
+        
+        // El QR del frente NO contiene el nombre por ley de protección de datos.
+        // Solo el PDF417 de atrás lo trae.
+        document.getElementById('nombreCompleto').focus();
+        alert("✅ RUN detectado: " + runEncontrado + "\nPor seguridad, el QR no incluye el nombre. Por favor, ingréselo manualmente.");
+    }
     // CASO 3: Otros formatos
-    else {
-        alert("Código detectado: " + data + ". Formato no reconocido.");
+else {
+        // Si falló todo, mostramos qué fue lo que leyó para investigar
+        alert("Contenido del QR no reconocido:\n" + data);
     }
 }
     function toggleVehiculo() {
