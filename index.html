@@ -122,21 +122,40 @@ html5QrCode.start(
 
     // --- PROCESAMIENTO COMÚN (Chile) ---
     function procesarDatosChile(cadena) {
-alert("¡Cámara leyó algo!: " + cadena); // <--- AÑADE ESTO PARA TESTEAR
+// 1. Ver qué leyó la cámara exactamente
+    alert("¡Lectura detectada!\nContenido: " + cadena.substring(0, 50) + "..."); 
+
+    try {
         const partes = cadena.split('|');
+        
+        // El carnet chileno suele tener entre 15 y 20 campos separados por "|"
         if (partes.length >= 4) {
-            let runLimpio = partes[0].replace(/^0+/, '');
+            let runLimpio = partes[0].replace(/^0+/, ''); // Quitar ceros
+            
+            // Formatear RUN con guion
             if (!runLimpio.includes('-')) {
                 runLimpio = runLimpio.slice(0, -1) + "-" + runLimpio.slice(-1);
             }
             
-            document.getElementById('run').value = runLimpio;
-            document.getElementById('nombreCompleto').value = `${partes[3]} ${partes[1]} ${partes[2]}`;
-            alert("Lectura exitosa");
+            // Asignar a los inputs (Asegúrate que los IDs coincidan: 'run' y 'nombreCompleto')
+            const inputRun = document.getElementById('run');
+            const inputNombre = document.getElementById('nombreCompleto');
+
+            if(inputRun && inputNombre) {
+                inputRun.value = runLimpio;
+                inputNombre.value = `${partes[3]} ${partes[1]} ${partes[2]}`;
+                alert("✅ Datos cargados al formulario");
+            } else {
+                alert("❌ Error: No se encontraron los campos 'run' o 'nombreCompleto' en el HTML");
+            }
+            
         } else {
-            alert("Código no reconocido. Asegúrese de escanear el reverso del carnet.");
+            alert("❌ El código leído no tiene el formato de una cédula (pocos separadores '|').");
         }
+    } catch (err) {
+        alert("❌ Error procesando los datos: " + err.message);
     }
+}
 
     function toggleVehiculo() {
         const tipo = document.getElementById('tipoEntrada').value;
