@@ -88,21 +88,30 @@
         const readerDiv = document.getElementById('reader');
         readerDiv.style.display = 'block';
 
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 300, height: 150 } };
+// 1. Especificamos explícitamente el formato PDF417
+    html5QrCode = new Html5Qrcode("reader", { 
+        formatsToSupport: [ Html5QrcodeSupportedFormats.PDF_417 ] 
+    });
+
+const config = { 
+        fps: 15, // Más cuadros por segundo para capturar mejor
+        qrbox: { width: 350, height: 150 }, // Caja rectangular como el carnet
+        aspectRatio: 1.777778 
+    };
 
         // Buscamos específicamente PDF417 (formato chileno)
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            config,
-            (decodedText) => {
-                procesarDatosChile(decodedText);
-                html5QrCode.stop(); // Detener cámara tras éxito
-                readerDiv.style.display = 'none';
-            },
-            (errorMessage) => { /* Errores de escaneo silenciosos */ }
-        ).catch(err => alert("Error de cámara: " + err));
-    }
+html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {
+            console.log("Datos capturados:", decodedText); // Ver en consola qué lee
+            procesarDatosChile(decodedText);
+            html5QrCode.stop(); // Detener cámara tras éxito
+            readerDiv.style.display = 'none';
+        },
+        (errorMessage) => { /* Escaneando... */ }
+    ).catch(err => alert("Error de cámara: " + err));
+}
 
     // --- LÓGICA DE LA PISTOLA ---
     function manejarEscaneoPistola(event) {
@@ -115,6 +124,7 @@
 
     // --- PROCESAMIENTO COMÚN (Chile) ---
     function procesarDatosChile(cadena) {
+alert("¡Cámara leyó algo!: " + cadena); // <--- AÑADE ESTO PARA TESTEAR
         const partes = cadena.split('|');
         if (partes.length >= 4) {
             let runLimpio = partes[0].replace(/^0+/, '');
