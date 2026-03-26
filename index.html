@@ -40,9 +40,9 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">RUN (Cédula)</label>
-                       <input type="text" id="run" class="form-control" 
+                      <input type="text" id="run" class="form-control" 
        placeholder="12345678-9" 
-       oninput="this.value = formatearRUT(this.value)" required>
+       oninput="this.value = formatearRUT(this.value); revisarValidezRUT(this.value)" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Nombre Completo</label>
@@ -105,6 +105,45 @@
 
     // 3. Retornamos el cuerpo unido al DV por un guion
     return cuerpo + "-" + dv;
+}
+    function validarRUT(rut) {
+    // 1. Limpieza total
+    let valor = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    if (valor.length < 8) return false;
+
+    // 2. Separar Cuerpo y Dígito Verificador
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1);
+
+    // 3. Calcular Dígito Verificador esperado (Algoritmo Módulo 11)
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = 1; i <= cuerpo.length; i++) {
+        let index = multiplo * valor.charAt(cuerpo.length - i);
+        suma = suma + index;
+        if (multiplo < 7) { multiplo = multiplo + 1; } else { multiplo = 2; }
+    }
+
+    let dvEsperado = 11 - (suma % 11);
+    dv = (dv == 'K') ? 10 : dv;
+    dv = (dv == 0) ? 11 : dv;
+
+    // 4. Comparar lo ingresado con lo calculado
+    if (dvEsperado != dv) { return false; }
+    return true;
+}
+    function revisarValidezRUT(valor) {
+    const input = document.getElementById('run');
+    if (valor.length > 8) {
+        if (validarRUT(valor)) {
+            input.style.borderColor = "#28a745"; // Verde si es válido
+            input.classList.remove("is-invalid");
+        } else {
+            input.style.borderColor = "#dc3545"; // Rojo si es inválido
+            input.classList.add("is-invalid");
+        }
+    }
 }
     let html5QrCode;
 
@@ -199,8 +238,15 @@ else {
         document.getElementById('campoPatente').style.display = (tipo === 'vehicular') ? 'block' : 'none';
     }
 
-    document.getElementById('registroForm').onsubmit = async function(e) {
+   document.getElementById('registroForm').onsubmit = async function(e) {
     e.preventDefault();
+    
+    const rutValue = document.getElementById('run').value;
+    
+    if (!validarRUT(rutValue)) {
+        alert("⚠️ El RUT ingresado no es válido. Por favor, corríjalo antes de continuar.");
+        return; // Detiene el envío
+    }
     
     // URL que copiaste de Google Apps Script
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyVTzRclzL0VMeDBbQmw6-6c0OkYQpF-2SvqmIe6wJhsiXTnnQrHaxiR6JbrpsHvdXo8Q/exec"; 
