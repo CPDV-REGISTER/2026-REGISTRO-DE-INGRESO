@@ -79,12 +79,44 @@
                             <option value="VISITA-PROVEEDORES">Visita-Proveedores</option>
                         </select>
                     </div>
+
+                    <div class="col-md-6 mb-3" id="contenedorExtra" style="display: none;">
+        <label class="form-label" id="labelExtra">Detalle de Visita</label>
+        <input type="text" id="detalleVisita" class="form-control" placeholder="">
+    </div>
+</div>
+
+function verificarMotivoEspecial() {
+    const motivo = document.getElementById('motivo').value;
+    const contenedor = document.getElementById('contenedorExtra');
+    const label = document.getElementById('labelExtra');
+    const input = document.getElementById('detalleVisita');
+
+    // Verificamos si la opción seleccionada es Proveedores o Arriendos
+    if (motivo === "VISITA-PROVEEDORES") {
+        contenedor.style.display = "block";
+        label.innerText = "Nombre de la Empresa / Proveedor";
+        input.placeholder = "Ej: Soprole, Chilexpress, etc.";
+    } 
+    else if (motivo === "VISITA-ARRIENDOS") {
+        contenedor.style.display = "block";
+        label.innerText = "Nombre de la Organización / Arrendatario";
+        input.placeholder = "Ej: Club Deportivo, Evento X, etc.";
+    } 
+    else {
+        // Para cualquier otra opción, ocultamos el campo y lo limpiamos
+        contenedor.style.display = "none";
+        input.value = "";
+    }
+}
+                
 <div class="col-md-6 mb-3" id="contenedorReferencia" style="display: none;">
         <label class="form-label" id="labelReferencia">Referencia</label>
         <input type="text" id="nombreReferencia" class="form-control" placeholder="...">
     </div>
 </div>
                     
+
 
                 <button type="submit" class="btn btn-success w-100 btn-lg">Finalizar Registro</button>
             </form>
