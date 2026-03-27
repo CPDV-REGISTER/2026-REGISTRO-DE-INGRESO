@@ -154,6 +154,31 @@
         }
     }
 }
+
+    function verificarMotivoEspecial() {
+    const motivo = document.getElementById('motivo').value;
+    const contenedor = document.getElementById('contenedorExtra');
+    const label = document.getElementById('labelExtra');
+    const input = document.getElementById('detalleVisita');
+
+    // Verificamos si la opción seleccionada es Proveedores o Arriendos
+    if (motivo === "VISITA-PROVEEDORES") {
+        contenedor.style.display = "block";
+        label.innerText = "Nombre de la Empresa / Proveedor";
+        input.placeholder = "Ej: Soprole, Chilexpress, etc.";
+    } 
+    else if (motivo === "VISITA-ARRIENDOS") {
+        contenedor.style.display = "block";
+        label.innerText = "Nombre de la Organización / Arrendatario";
+        input.placeholder = "Ej: Club Deportivo, Evento X, etc.";
+    } 
+    else {
+        // Para cualquier otra opción, ocultamos el campo y lo limpiamos
+        contenedor.style.display = "none";
+        input.value = "";
+    }
+}
+    
     let html5QrCode;
 
     // --- LÓGICA DE LA CÁMARA ---
@@ -285,29 +310,7 @@ else {
         alert("❌ Error al guardar. Revisa la conexión.");
     }
 
-       function verificarMotivoEspecial() {
-    const motivo = document.getElementById('motivo').value;
-    const contenedor = document.getElementById('contenedorExtra');
-    const label = document.getElementById('labelExtra');
-    const input = document.getElementById('detalleVisita');
-
-    // Verificamos si la opción seleccionada es Proveedores o Arriendos
-    if (motivo === "VISITA-PROVEEDORES") {
-        contenedor.style.display = "block";
-        label.innerText = "Nombre de la Empresa / Proveedor";
-        input.placeholder = "Ej: Soprole, Chilexpress, etc.";
-    } 
-    else if (motivo === "VISITA-ARRIENDOS") {
-        contenedor.style.display = "block";
-        label.innerText = "Nombre de la Organización / Arrendatario";
-        input.placeholder = "Ej: Club Deportivo, Evento X, etc.";
-    } 
-    else {
-        // Para cualquier otra opción, ocultamos el campo y lo limpiamos
-        contenedor.style.display = "none";
-        input.value = "";
-    }
-}
+       
        
 };
 </script>
