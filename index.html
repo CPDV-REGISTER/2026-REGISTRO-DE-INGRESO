@@ -308,19 +308,23 @@ else {
         return; // Detiene el envío
     }
     
-    // URL que copiaste de Google Apps Script
+   // 2. Definimos la URL de tu Google Apps Script (La que termina en /exec)
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyVTzRclzL0VMeDBbQmw6-6c0OkYQpF-2SvqmIe6wJhsiXTnnQrHaxiR6JbrpsHvdXo8Q/exec"; 
 
     const datos = {
         run: document.getElementById('run').value,
         nombre: document.getElementById('nombreCompleto').value,
-        tipo: document.getElementById('tipoEntrada').value,
+        tipo: document.getElementById('tipoEntrada').value, // Peatonal/Vehicular
         patente: document.getElementById('patente').value || "N/A",
-        motivo: document.getElementById('motivo').value,
-        detalle: document.getElementById('detalleVisita').value || "N/A"
+        motivo: document.getElementById('motivo').value, 
+        detalle: document.getElementById('detalleVisita').value || "N/A" // Capturamos el detalle (Proveedor/Arriendo) o ponemos N/A si está oculto
     };
-
+// 4. Enviamos los datos a la nube
     try {
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true; // Desactivamos el botón para evitar doble clic
+        btn.innerText = "Guardando...";
+        
         const response = await fetch(URL_SCRIPT, {
             method: 'POST',
             mode: 'no-cors', // Importante para evitar bloqueos de seguridad simples
@@ -328,13 +332,17 @@ else {
             body: JSON.stringify(datos)
         });
 
-        alert("✅ Registro guardado en Google Sheets correctamente");
-        this.reset();
-        document.getElementById('campoPatente').style.display = 'none';
+        // 5. Éxito: Limpiamos y avisamos
+alert("✅ Registro guardado exitosamente en la base de datos.");
+        this.reset(); // Limpia todos los campos
+        document.getElementById('contenedorExtra').style.display = 'none'; // Oculta el campo extra
+        document.getElementById('campoPatente').style.display = 'none'; // Oculta patente
+        btn.disabled = false;
+        btn.innerText = "Finalizar Registro";
         
     } catch (error) {
         console.error("Error:", error);
-        alert("❌ Error al guardar. Revisa la conexión.");
+        alert("❌ Error al conectar con la base de datos. Revisa la conexión.");
     }
 
        
