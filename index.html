@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        /* ESTILOS VISUALES NUEVOS */
         body { 
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('LINK_DE_TU_IMAGEN_DE_FONDO');
             background-size: cover;
@@ -15,6 +14,7 @@
             background-attachment: fixed;
             padding: 20px; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
         }
 
         .form-container { 
@@ -25,26 +25,60 @@
         }
 
         .logo-colegio {
-            max-width: 600px;
+            max-width: 300px; /* Ajustado para que no ocupe toda la pantalla en móviles */
             display: block;
             margin: 0 auto 20px auto;
         }
 
-        /* ESTILOS ORIGINALES MANTENIDOS Y MEJORADOS */
         #reader { width: 100% !important; border-radius: 10px; overflow: hidden; display: none; margin-bottom: 20px; border: 2px solid #0d6efd !important; }
         .scanner-input-group { background: #f8f9fa; border: 2px dashed #ced4da; padding: 15px; border-radius: 20px; margin-bottom: 20px}
         #campoPatente { display: none; }
         .form-select { white-space: normal !important; height: auto !important; min-height: 50px; }
         .is-invalid { border-color: #dc3545 !important; }
+
+        /* Badge flotante para indicar el portal activo */
+        #badgePortal { 
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            z-index: 1001; 
+            display: none; 
+        }
     </style>
 </head>
 <body>
 
+<div id="badgePortal">
+    <span class="badge bg-dark p-2 border border-secondary shadow">
+        📍 <span id="nombrePortalActivo"></span> 
+        <button class="btn btn-sm btn-link text-info p-0 ms-2" onclick="cambiarPortal()" style="text-decoration: none; font-size: 0.8rem;">(Cambiar)</button>
+    </span>
+</div>
+
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8 form-container">
+        
+        <div class="col-md-6 form-container" id="setupPortal">
             <img src="LOGO-CPDV.png" alt="Logo Colegio" class="logo-colegio">
+            <h3 class="text-center mb-4">Configuración de Punto de Control</h3>
+            <p class="text-center text-muted">Seleccione su ubicación actual para registrar los ingresos correctamente.</p>
             
+            <div class="mb-4">
+                <select id="selectorPortal" class="form-select form-select-lg">
+                    <option value="">-- Seleccione Punto de Control --</option>
+                    <option value="HALL GUARDIA">HALL CENTRAL-GUARDIA</option>
+                    <option value="HALL RECEPCIÓN">HALL CENTRAL-RECEPCIÓN</option>
+                    <option value="CH3">CH3 COSTADO ANFP</option>
+                    <option value="CH3 DIR">CH3 COSTADO ANFP INGRESO DIRECTO</option>
+                    <option value="CH2">CH2 MAR TIRRENO</option>
+		    <option value="10B">10B COSTADO DE GIMNASIO</option>
+                </select>
+            </div>
+            <button onclick="confirmarPortal()" class="btn btn-primary w-100 btn-lg">Iniciar Turno</button>
+        </div>
+
+        <div class="col-md-8 form-container" id="appGuardia" style="display: none;">
+            <img src="LOGO-CPDV.png" alt="Logo Colegio" class="logo-colegio">
             <h2 class="text-center mb-4">Registro de Ingreso</h2>
 
             <div class="text-center mb-3">
@@ -58,7 +92,6 @@
                 <div class="text-center mb-3">
                     <label class="form-label"><strong>Lector de Carnet / QR</strong></label>
                     <input type="text" id="inputScanner" class="form-control" placeholder="Haga clic aquí y escanee..." onkeypress="manejarEscaneoPistola(event)">
-                    <small class="text-muted">Si usa escáner de pistola, el cursor debe estar aquí.</small>
                 </div>
             </div>
 
@@ -106,16 +139,10 @@
                             <option value="VISITA-PROVEEDORES">Visita-Proveedores</option>
                         </select>
                     </div>
-
                     <div class="col-md-12 mb-3" id="contenedorExtra" style="display: none;">
                         <label class="form-label" id="labelExtra">Detalle de Visita</label>
                         <input type="text" id="detalleVisita" class="form-control" placeholder="">
                     </div>
-                </div>
-
-                <div class="col-md-6 mb-3" id="contenedorReferencia" style="display: none;">
-                    <label class="form-label" id="labelReferencia">Referencia</label>
-                    <input type="text" id="nombreReferencia" class="form-control" placeholder="...">
                 </div>
 
                 <button type="submit" class="btn btn-success w-100 btn-lg mt-3">Finalizar Registro</button>
@@ -125,7 +152,40 @@
 </div>
 
 <script>
-// --- FUNCIONES DE APOYO ---
+// --- LÓGICA DE PERSISTENCIA Y PORTAL ---
+let portalActual = "";
+
+window.onload = function() {
+    const portalGuardado = localStorage.getItem('portal_seleccionado');
+    if (portalGuardado) {
+        mostrarApp(portalGuardado);
+    }
+};
+
+function confirmarPortal() {
+    const sel = document.getElementById('selectorPortal');
+    if (sel.value === "") return alert("Por favor seleccione un portal.");
+    
+    localStorage.setItem('portal_seleccionado', sel.value);
+    mostrarApp(sel.value);
+}
+
+function mostrarApp(nombrePortal) {
+    portalActual = nombrePortal;
+    document.getElementById('setupPortal').style.display = 'none';
+    document.getElementById('appGuardia').style.display = 'block';
+    document.getElementById('badgePortal').style.display = 'block';
+    document.getElementById('nombrePortalActivo').innerText = nombrePortal;
+}
+
+function cambiarPortal() {
+    if (confirm("¿Desea cambiar el punto de acceso registrado?")) {
+        localStorage.removeItem('portal_seleccionado');
+        location.reload();
+    }
+}
+
+// --- FUNCIONES DE APOYO (FORMATO Y VALIDACIÓN) ---
 function formatearRUT(rut) {
     let valor = rut.replace(/\./g, '').replace(/-/g, '').trim();
     if (valor.length < 2) return valor;
@@ -171,14 +231,10 @@ function verificarMotivoEspecial() {
     if (motivo === "VISITA-PROVEEDORES") {
         contenedor.style.display = "block";
         label.innerText = "Nombre de la Empresa/Proveedor";
-        input.placeholder = "Ej: Soprole, Chilexpress, etc.";
-    } 
-    else if (motivo === "VISITA-ARRIENDOS") {
+    } else if (motivo === "VISITA-ARRIENDOS") {
         contenedor.style.display = "block";
         label.innerText = "Nombre de la Organización/Arrendatario";
-        input.placeholder = "Ej: Club Deportivo, Evento X, etc.";
-    } 
-    else {
+    } else {
         contenedor.style.display = "none";
         input.value = "";
     }
@@ -191,12 +247,10 @@ function encenderCamara() {
     const readerDiv = document.getElementById('reader');
     readerDiv.style.display = 'block';
     html5QrCode = new Html5Qrcode("reader");
-    const config = { fps: 20, qrbox: { width: 300, height: 200 } };
-
-    html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+    html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 300 }, (decodedText) => {
         procesarDatosChile(decodedText);
         setTimeout(() => { html5QrCode.stop(); readerDiv.style.display = 'none'; }, 1000);
-    }).catch(err => alert("Error: " + err));
+    }).catch(err => alert("Error Cámara: " + err));
 }
 
 function manejarEscaneoPistola(event) {
@@ -208,99 +262,63 @@ function manejarEscaneoPistola(event) {
 }
 
 function procesarDatosChile(data) {
-    // 1. TRADUCTOR DE TECLADO
     let dataCorregida = data.replace(/\]/g, '|').replace(/'/g, '-').trim();
 
-    // 2. DETECCIÓN DE PASE DE INVITADO
+    // LÓGICA PASE INVITADO
     if (dataCorregida.toUpperCase().includes("PASE")) {
         const partes = dataCorregida.split('|');
-        
-        // El timestamp es la parte 8 (indice 7)
         if (partes.length >= 8) {
-            
-            // --- VALIDACIÓN DE TIEMPO (1 HORA) ---
             const timestampGeneracion = parseInt(partes[7]);
-            const ahora = Date.now();
-            const diferenciaMinutos = (ahora - timestampGeneracion) / (1000 * 60);
-            
-            // Convertir el timestamp a hora legible
+            const diferenciaMinutos = (Date.now() - timestampGeneracion) / (1000 * 60);
             const horaLeible = new Date(timestampGeneracion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             if (diferenciaMinutos > 60) {
-                alert("❌ PASE VENCIDO\nEste código expiró hace " + Math.round(diferenciaMinutos - 60) + " minutos.\nGenerado a las: " + horaLeible);
-                document.getElementById('registroForm').reset();
+                alert("❌ PASE VENCIDO\nExpiró hace " + Math.round(diferenciaMinutos - 60) + " minutos.\nGenerado a las: " + horaLeible);
                 return;
             }
 
-            // --- LLENADO DE DATOS ---
             let rutInvitado = partes[1].replace(/\./g, '');
-            if (!rutInvitado.includes('-')) {
-                rutInvitado = rutInvitado.slice(0, -1) + "-" + rutInvitado.slice(-1);
-            }
+            if (!rutInvitado.includes('-')) rutInvitado = rutInvitado.slice(0, -1) + "-" + rutInvitado.slice(-1);
 
             document.getElementById('run').value = rutInvitado.toUpperCase();
             document.getElementById('nombreCompleto').value = partes[2] || "";
             document.getElementById('tipoEntrada').value = partes[3] || "peatonal";
             
-            // BLINDAJE DE MOTIVO: Si el motivo no está en la lista, lo agregamos
-            const motivoQR = partes[5] || "";
             const selectMotivo = document.getElementById('motivo');
-            let existeOpcion = Array.from(selectMotivo.options).some(opt => opt.value === motivoQR);
-            
-            if (!existeOpcion && motivoQR !== "") {
-                let nuevaOpt = new Option(motivoQR, motivoQR);
-                selectMotivo.add(nuevaOpt);
+            const motivoQR = partes[5] || "";
+            if (!Array.from(selectMotivo.options).some(opt => opt.value === motivoQR)) {
+                selectMotivo.add(new Option(motivoQR, motivoQR));
             }
             selectMotivo.value = motivoQR;
 
-            // Actualizar interfaz
             toggleVehiculo();
             verificarMotivoEspecial();
-
-            if (partes[3] === 'vehicular') {
-                document.getElementById('patente').value = partes[4] || "";
-            }
-            
-            if (partes[6] && partes[6] !== "SD") {
-                document.getElementById('detalleVisita').value = partes[6];
-            }
+            if (partes[3] === 'vehicular') document.getElementById('patente').value = partes[4] || "";
+            if (partes[6] && partes[6] !== "SD") document.getElementById('detalleVisita').value = partes[6];
 
             alert("✅ PASE VÁLIDO\nGenerado a las: " + horaLeible);
             return;
         }
     }
 
-    // 3. CASO CARNET FÍSICO (PDF417)
+    // CARNET FÍSICO
     if (dataCorregida.split('|').length > 10) {
         const partes = dataCorregida.split('|');
         let runRaw = partes[0].replace(/^0+/, '');
         let runFinal = (!runRaw.includes('-')) ? runRaw.slice(0, -1) + "-" + runRaw.slice(-1) : runRaw;
         document.getElementById('run').value = formatearRUT(runFinal);
         document.getElementById('nombreCompleto').value = `${partes[3]} ${partes[1]} ${partes[2]}`;
-        return;
-    }
-
-    // 4. CASO RUT SUELTO
-    const regexRUT = /(\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]{1})/;
-    const coincidencia = dataCorregida.match(regexRUT);
-    if (coincidencia) {
-        let run = coincidencia[0].replace(/\./g, '');
-        if (!run.includes('-')) run = run.slice(0, -1) + "-" + run.slice(-1);
-        document.getElementById('run').value = run.toUpperCase();
-        document.getElementById('nombreCompleto').focus();
     }
 }
 
-// --- ENVÍO DE DATOS ---
+// --- ENVÍO FINAL ---
 document.getElementById('registroForm').onsubmit = async function(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     
-    if (!validarRUT(document.getElementById('run').value)) {
-        return alert("RUT Inválido");
-    }
+    if (!validarRUT(document.getElementById('run').value)) return alert("RUT Inválido");
 
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbyVTzRclzL0VMeDBbQmw6-6c0OkYQpF-2SvqmIe6wJhsiXTnnQrHaxiR6JbrpsHvdXo8Q/exec";
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbwHDSIRPrSK6naE_cjSnNNWs_jT95IIWz3KcE_jEsF-HU-WFZhh1r0Z7jXpoL1ubv5N5w/exec";
 
     const datos = {
         run: document.getElementById('run').value,
@@ -308,7 +326,8 @@ document.getElementById('registroForm').onsubmit = async function(e) {
         tipo: document.getElementById('tipoEntrada').value,
         patente: document.getElementById('patente').value || "N/A",
         motivo: document.getElementById('motivo').value,
-        detalle: document.getElementById('detalleVisita').value || "N/A"
+        detalle: document.getElementById('detalleVisita').value || "N/A",
+        portal: portalActual // <--- NUEVO CAMPO ENVIADO
     };
 
     try {
@@ -316,12 +335,12 @@ document.getElementById('registroForm').onsubmit = async function(e) {
         btn.innerText = "Guardando...";
         await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(datos) });
         
-        alert("✅ Registro Guardado Exitosamente");
+        alert("✅ Registro Guardado en: " + portalActual);
         this.reset();
-        document.getElementById('campoPatente').style.display = 'none';
-        document.getElementById('contenedorExtra').style.display = 'none';
+        toggleVehiculo();
+        verificarMotivoEspecial();
     } catch (error) {
-        alert("❌ Error al conectar con el servidor");
+        alert("❌ Error de conexión");
     } finally {
         btn.disabled = false;
         btn.innerText = "Finalizar Registro";
