@@ -131,11 +131,12 @@
                         <label class="form-label">Motivo de Ingreso</label>
                         <select id="motivo" class="form-select" onchange="verificarMotivoEspecial()">
                             <option value="">Seleccione una opción...</option>
-            <option value="APODERADO-RETIRO ESTUDIANTE (ENFERMERIA,INSPECTORIA)">Apoderado-Retiro Estudiante (Enfermería, Inspectoría)</option>
+         <option value="APODERADO-RETIRO ESTUDIANTE (ENFERMERIA,INSPECTORIA)">Apoderado-Retiro Estudiante (Enfermería, Inspectoría)</option>
             <option value="APODERADO-ENTREGAR ELEMENTOS">Apoderado-Entregar elementos</option>
             <option value="APODERADO-SELECCIONES O TALLERES CPDV">Apoderado-Selecciones o Talleres CPDV</option>
             <option value="APODERADO-CITA ADMISION-RECAUDACION">Apoderado-Cita Admisión-Recaudación</option>
             <option value="APODERADO-CITA DOCENTE">Apoderado-Cita docente</option>
+            <option value="APODERADO-ACTIVIDADES ESPECIALES (REUNION, CHARLA, PRESENTACIÓN, GRADUACIÓN)">Apoderado-Actividades especiales (Charla, reunión, graduación, presentación)</option>
             <option value="VISITA-ISP">Visita-ISP</option>
             <option value="VISITA-ADMISION">Visita-Admisión</option>
             <option value="VISITA-ENTREVISTA">Visita-Entrevista</option>
@@ -234,14 +235,32 @@ function verificarMotivoEspecial() {
     const label = document.getElementById('labelExtra');
     const input = document.getElementById('detalleVisita');
 
-    if (motivo === "VISITA-PROVEEDORES") {
-        contenedor.style.display = "block";
-        label.innerText = "Nombre de la Empresa/Proveedor";
-    } else if (motivo === "VISITA-ARRIENDOS") {
-        contenedor.style.display = "block";
-        label.innerText = "Nombre de la Organización/Arrendatario";
-    } else {
-        contenedor.style.display = "none";
+ if (motivo === "VISITA-PROVEEDORES") {
+            contenedor.style.display = "block";
+            label.innerText = "Nombre de la Empresa/Proveedor";
+            input.placeholder = "Ej: Soprole, Chilexpress, etc.";
+        } else if (motivo === "VISITA-ARRIENDOS") {
+            contenedor.style.display = "block";
+            label.innerText = "Nombre de la Organización/Arrendatario";
+            input.placeholder = "Ej: Club Deportivo, Evento X, etc.";
+        } else if (motivo === "VISITA-ENTREVISTA") {
+            contenedor.style.display = "block";
+            label.innerText = "Nombre del convocante";
+            input.placeholder = "Indicar nombre de la persona que convoca";
+        } else if (motivo === "APODERADO-CITA DOCENTE") {
+            contenedor.style.display = "block";
+            label.innerText = "Nombre del convocante";
+            input.placeholder = "Indicar nombre de la persona que convoca";
+        } else if (motivo === "APODERADO-ACTIVIDADES ESPECIALES (REUNION, CHARLA, PRESENTACIÓN, GRADUACIÓN)") {
+            contenedor.style.display = "block";
+            label.innerText = "Nombre de la actividad";
+            input.placeholder = "Indicar nombre de la actividad";
+        } else if (motivo === "VISITA-PERSONAL DE APOYO (PSICOLOGIA, TERAPIA OCUPACIONAL)") {
+            contenedor.style.display = "block";
+            label.innerText = "Identificar ciclo al que presta apoyo";
+            input.placeholder = "Ej: Early Years";
+        } else {
+            contenedor.style.display = "none";
         input.value = "";
     }
 }
