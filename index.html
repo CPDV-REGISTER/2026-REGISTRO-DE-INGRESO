@@ -24,8 +24,10 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
         }
 
+        /* Logo Responsivo */
         .logo-colegio {
-            max-width: 300px; /* Ajustado para que no ocupe toda la pantalla en móviles */
+            width: 80%;
+            max-width: 300px;
             display: block;
             margin: 0 auto 20px auto;
         }
@@ -245,14 +247,48 @@ let html5QrCode;
 
 function encenderCamara() {
     const readerDiv = document.getElementById('reader');
+    const btnIniciar = document.getElementById('btnIniciarCamara');
+    const btnDetener = document.getElementById('btnDetenerCamara');
+
     readerDiv.style.display = 'block';
+    btnIniciar.style.display = 'none';
+    btnDetener.style.display = 'block';
+
     html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 300 }, (decodedText) => {
-        procesarDatosChile(decodedText);
-        setTimeout(() => { html5QrCode.stop(); readerDiv.style.display = 'none'; }, 1000);
-    }).catch(err => alert("Error Cámara: " + err));
+    
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        { fps: 20, qrbox: 250 }, 
+        (decodedText) => {
+            procesarDatosChile(decodedText);
+            apagarCamara(); // Se apaga sola al leer
+        }
+    ).catch(err => {
+        alert("Error de cámara: " + err);
+        apagarCamara();
+    });
 }
 
+function apagarCamara() {
+    const readerDiv = document.getElementById('reader');
+    const btnIniciar = document.getElementById('btnIniciarCamara');
+    const btnDetener = document.getElementById('btnDetenerCamara');
+
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            readerDiv.style.display = 'none';
+            btnIniciar.style.display = 'block';
+            btnDetener.style.display = 'none';
+        }).catch(err => {
+            console.error("Error al apagar:", err);
+            // Forzar ocultamiento si falla el stop
+            readerDiv.style.display = 'none';
+            btnIniciar.style.display = 'block';
+            btnDetener.style.display = 'none';
+        });
+    }
+}
 function manejarEscaneoPistola(event) {
     if (event.key === 'Enter') {
         event.preventDefault();
